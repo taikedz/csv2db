@@ -2,12 +2,24 @@
 
 DATAFILE=
 TABLENAME=
+INHEADERS=-
+COLHEADS=
 
 while [[ -n "$@" ]]; do
 	ARG=$1
 	shift
 	if [[ -n "$@" ]]; then
 		case "$ARG" in
+		-h)
+			INHEADERS=$1 # CSV file headers -- default all
+			shift
+			continue
+			;;
+		-c)
+			COLHEADS=$1 # table dest columns -- default same as INHEADERS
+			shift
+			continue
+			;;
 		-t)
 			TABLENAME=$1
 			shift
@@ -30,7 +42,15 @@ done
 [[ -z "$DATAFILE" ]] && { echo "[1;31mNo data file \$1[0m" ; exit 1 ; }
 [[ -z "$TABLENAME" ]] && { echo "[1;31mNo table name \$2[0m" ; exit 1 ; }
 
-heads=$(bin/createdb -h "$DATAFILE" --printcols|xargs echo|sed 's/ /,/g')
+if [[ "$INHEADERS" = "-" ]]; then
+	INHEADERS=$(createdb -h "$DATAFILE" --printcols|xargs echo|sed 's/ /,/g')
+fi
 
-bin/csvreader.py -f "$DATAFILE" -h - -w | sed -r -e 's/\t/","/g' -e 's/^|$/"/g'|sed -r -e "s/^/INSERT INTO $TABLENAME ($heads) VALUES (/" -e 's/$/ );/' -e 's|([0-9]{2})/([0-9]{2})/([0-9]{4})|\3/\2/\1|g'
+if [[ -z "$COLHEADS" ]]; then
+	COLHEADS="$INHEADERS"
+else
+	COLHEADS=$(createdb -h "$DATAFILE" --printcols|xargs echo|sed 's/ /,/g')
+fi
+
+csvreader.py -f "$DATAFILE" -h "$INHEADERS" -w | sed -r -e 's/\t/","/g' -e 's/^|$/"/g'|sed -r -e "s/^/INSERT INTO $TABLENAME ($COLHEADS) VALUES (/" -e 's/$/ );/' -e 's|([0-9]{2})/([0-9]{2})/([0-9]{4})|\3/\2/\1|g'
 
