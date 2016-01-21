@@ -5,6 +5,34 @@ TABLENAME=
 INHEADERS=-
 COLHEADS=
 
+function printhelp {
+cat <<EOHELP
+Create MySQL-compatible insertion queries from CSV file
+
+OPTIONS
+
+	-d FILE
+	Specify the CSV data file
+
+	-t TABLENAME
+	Specify the table name to insert to
+
+	-h FILE
+	Specify a file of comma-separated header names from the CSV
+	Any run of characters that are neither alphanumeric or the underscore "_" character
+	 must be replaced with a single underscore character.
+	 So if the header in CSV is "Month (short)", the name in this file should be
+	 "Month_short_"
+	By default, use all columns
+	
+	-c FILE
+	Specify a file of comma-separated names of MySQL columns to insert to.
+	 Needs to be the same number of columns as in the CSV headers specified by -h
+	By default, use the same names as -h
+	
+EOHELP
+}
+
 while [[ -n "$@" ]]; do
 	ARG=$1
 	shift
@@ -33,8 +61,13 @@ while [[ -n "$@" ]]; do
 		esac
 	fi
 	case "$ARG" in
+	--help)
+		printhelp
+		exit 0
+		;;
 	*)
 		echo "[131mI do not understand [1;34m$ARG[0m" 1>&2
+		;;
 	esac
 done
 
