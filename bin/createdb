@@ -1,0 +1,108 @@
+#!/bin/bash
+
+CDEF='[0m'
+CRED='[1;31m'
+namepat='^[a-zA-Z0-9]+$'
+nulstrpat='^\s*$'
+numpat='^[0-9]+$'
+
+DBUSER=
+DBPASS=
+DBNAME=
+TABLENAME=
+HEADFILE=
+INDEXER=
+PRINTCOLS=no
+VARICHARS=
+
+function printerr {
+	echo "${CRED}$@$CDEF" 1>&2
+}
+
+function varichar {
+	eqval=$(echo "$1"|base64 -di)
+	
+
+	PAT=$(echo "$eqval"|cut -d '=' -f 1)
+	[[ "$PAT" =~ / ]] && { echo "$eqval" ; return ; }
+	LEN=$(echo "$eqval"|cut -d '=' -f 2)
+	[[ ! "$LEN" =~ $numpat ]] && { echo "$eqval" ; return ; }
+
+	sed -r "s/^(.*$PAT.*) x(%?)\$/\1 varchar($LEN),\2/i" # reads from stdin of the call
+}
+
+while [[ -n "$@" ]]; do
+	myarg=$1
+	shift
+	if [[ "$myarg" = '-u' ]]; then # target database user
+		DBUSER=$1
+		shift
+	elif [[ "$myarg" = '-p' ]]; then # target database password
+		DBPASS=$1
+		shift
+	elif [[ "$myarg" = '-d' ]]; then # target database name
+		DBNAME=$1
+		[[ ! "$DBNAME" =~ $namepat ]] && {
+			printerr "Invalid database name"
+			exit 4
+		}
+		shift
+	elif  [[ "$myarg" = '-t' ]]; then # target table name
+		TABLENAME=$1
+		shift
+	elif [[ "$myarg" = '-v' ]]; then
+		VARICHARS="$VARICHARS "$(echo "$1"|base64 -w 0)
+		shift
+	elif [[ "$myarg" = '-i' ]]; then # list patterns to match against header names - a pattern "id" would match "userid" and "customerid" and cause both to eb indexed, but not "UserId"
+		INDEXER="$INDEXER $1"
+		shift
+	elif [[ "$myarg" = '-h' ]]; then # specify a file with the header names (usually the original CSV)
+		HEADFILE=$1
+		shift
+	elif [[ "$myarg" = '--printcols' ]]; then # just print the columns
+		PRINTCOLS=yes
+	elif [[ "$myarg" = '--run' ]]; then # whether to actually execute the MySQL statement - default is no
+		RUNIT=yes
+	else
+		printerr "I do not understand $myarg"
+		exit 1
+	fi
+done
+
+[[ ! -f  "$HEADFILE" ]] && { printerr "No header file $HEADFILE" ; exit 2 ; }
+[[ ! "$TABLENAME" =~ $namepat ]] && [[ ! "$PRINTCOLS" = yes ]] && { printerr "Specify a valid table name to create" ; exit 3 ; }
+
+# extract headers
+headnames=$(head -n 1 $HEADFILE|sed -e '1s/\xef\xbb\xbf//g' -e 's/"//g'|sed -r -e 's/[^a-zA-Z0-9_,]+/_/g'|sed -e 's/,/\n/g' -e 's/\r//' )
+headsql=$(echo "$headnames"|sed -r -e 's/$/ x/'|sed -r -e 's/^/\t/g' )%
+
+for veq in $VARICHARS; do
+	headsql=$(echo "$headsql"|varichar $veq)
+done
+headsql=$(echo "$headsql"|sed -r -e 's/ x(%?)$/ varchar(50),\1/'|sed -r 's/,%$//')
+
+[[ "$PRINTCOLS" = yes ]] && {
+	echo "$headnames"
+	exit 0
+}
+
+sqlquery=$(cat <<EOSQL
+create table $TABLENAME (
+	id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+$headsql
+);
+
+$(
+for ix in $INDEXER; do
+	echo "$headnames" | while read hname; do
+		[[ "$hname" =~ "$ix" ]] && echo "create index $hname on $TABLENAME($hname);"
+	done
+done
+)
+
+EOSQL
+)
+
+echo -e "#Query that would be created\n\n$sqlquery"
+[[ "$RUNIT" = "yes" ]] && echo "$sqlquery"| mysql -u "$DBUSER" -p"$DBPASS" "$DBNAME"
+
