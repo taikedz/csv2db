@@ -43,9 +43,10 @@ OPTIONS
 	name of the atrget table to create
 
 	-d HEADPAT=SQLDEF
-	Pattern of header names, and field definition (for example, DATETIME or varchar(30))
+	Pattern of column names, and field definition (for example, DATETIME or
+	varchar(30)), to define the data type
 	  eg:
-		-d Name=30
+		-d Name=varchar(30)
 	  for any column with columns matching regex ".*Name.*" to be of
 	  type varchar of length 30
 	You can specify multiple "-d" options
