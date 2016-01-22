@@ -45,13 +45,17 @@ OPTIONS
 	-d HEADPAT=SQLDEF
 	Pattern of header names, and field definition (for example, DATETIME or varchar(30))
 	  eg:
-		-v Name=30
-	  for any column with "Name" in it to be of type varchar of length 30
-	You can specify as many as you want as severl "-v" definitions
+		-d Name=30
+	  for any column with columns matching regex ".*name.*" to be of
+	  type varchar of length 30
+	You can specify multiple "-d" options
 
 	-i INDEXING
 	Pattern of header names for which to create an index
-	You can specify as many as you want as severl "-v" definitions
+	You can specify multiple "-i" options
+	eg
+		-i date -i name
+	will add indexes for any columns matching regex ".*date.*" or ".*name.*"
 
 	-h HEADERFILE
 	File whose first line is a comma-separated value of header names
