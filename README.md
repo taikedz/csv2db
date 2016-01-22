@@ -16,10 +16,12 @@ This tool requires merely `bash` and the standard python CSV libraries.
 
 ## Usage
 
-You basically need these two commands:
+For the simplest use-case, these two commands are sufficient:
 
-	createdb -h myfile.csv -t TableName
-	querify.sh -d myfile.csv -t TableName
+	createdb -h myfile.csv -t TableName | mysql -u yourUser yourDatabase
+	querify.sh -d myfile.csv -t TableName | mysql -u yourUser yourDatabase
+
+Note that the scripts primarily produce the MySQL queries - they do not touch the databse.
 
 ## The Scripts
 
