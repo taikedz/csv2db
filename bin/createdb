@@ -103,14 +103,14 @@ headsql=$(echo "$headnames"|sed -r -e 's/$/ x/'|sed -r -e 's/^/\t/g' )%
 for veq in $VARICHARS; do
 	headsql=$(echo "$headsql"|varichar $veq)
 done
-headsql=$(echo "$headsql"|sed -r -e 's/ x(%?)$/ varchar(50),\1/'|sed -r 's/,%$//')
+headsql=$(echo "$headsql"|sed -r -e 's/ x(%?)$/ varchar('$VCSIZE'),\1/'|sed -r 's/,%$//')
 
 [[ "$PRINTCOLS" = yes ]] && {
 	echo "$headnames"
 	exit 0
 }
 
-sqlquery=$(cat <<EOSQL
+cat <<EOSQL
 create table $TABLENAME (
 	id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
 $headsql
@@ -125,7 +125,4 @@ done
 )
 
 EOSQL
-)
-
-echo -e "#Query that would be created\n\n$sqlquery"
 
