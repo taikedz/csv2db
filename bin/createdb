@@ -6,14 +6,12 @@ namepat='^[a-zA-Z0-9]+$'
 nulstrpat='^\s*$'
 numpat='^[0-9]+$'
 
-DBUSER=
-DBPASS=
-DBNAME=
 TABLENAME=
 HEADFILE=
 INDEXER=
 PRINTCOLS=no
 VARICHARS=
+VCSIZE=50
 
 function printerr {
 	echo "${CRED}$@$CDEF" 1>&2
@@ -31,23 +29,46 @@ function varichar {
 	sed -r "s/^(.*$PAT.*) x(%?)\$/\1 varchar($LEN),\2/i" # reads from stdin of the call
 }
 
+function printhelp {
+cat <<EOF
+
+Create a table definition from a CSV file
+
+Every table created will have an "id" column that serves as primary key.
+
+All columns are of type varchar with size $VCSIZE
+
+OPTIONS
+
+	-t TABLENAME
+	name of the atrget table to create
+
+	-v HEADPAT=SIZE
+	Pattern of header names, and size of the field (varchar)
+	  eg:
+		-v Name=30
+	  for any column with "Name" in it to be of type varchar of length 30
+	You can specify as many as you want as severl "-v" definitions
+
+	-i INDEXING
+	Pattern of header names for which to create an index
+	You can specify as many as you want as severl "-v" definitions
+
+	-h HEADERFILE
+	File whose first line is a comma-separated value of header names
+	Typically, the CSV file itself
+
+	--printcols
+	Rather than printing the table creation SQL script, just print a
+	tab-separated list of resulting column heads.
+
+EOF
+}
+
 while [[ -n "$@" ]]; do
 	myarg=$1
 	shift
-	if [[ "$myarg" = '-u' ]]; then # target database user
-		DBUSER=$1
-		shift
-	elif [[ "$myarg" = '-p' ]]; then # target database password
-		DBPASS=$1
-		shift
-	elif [[ "$myarg" = '-d' ]]; then # target database name
-		DBNAME=$1
-		[[ ! "$DBNAME" =~ $namepat ]] && {
-			printerr "Invalid database name"
-			exit 4
-		}
-		shift
-	elif  [[ "$myarg" = '-t' ]]; then # target table name
+	if  [[ "$myarg" = '-t' ]]; then # target table name
 		TABLENAME=$1
 		shift
 	elif [[ "$myarg" = '-v' ]]; then
@@ -59,10 +80,14 @@ while [[ -n "$@" ]]; do
 	elif [[ "$myarg" = '-h' ]]; then # specify a file with the header names (usually the original CSV)
 		HEADFILE=$1
 		shift
+	elif [[ "$myarg" = '-s' ]]; then
+		VCSIZE=$1
+		shift
+	elif [[ "$myarg" = '--help' ]]; then
+		printhelp
+		exit 0
 	elif [[ "$myarg" = '--printcols' ]]; then # just print the columns
 		PRINTCOLS=yes
-	elif [[ "$myarg" = '--run' ]]; then # whether to actually execute the MySQL statement - default is no
-		RUNIT=yes
 	else
 		printerr "I do not understand $myarg"
 		exit 1
@@ -104,5 +129,4 @@ EOSQL
 )
 
 echo -e "#Query that would be created\n\n$sqlquery"
-[[ "$RUNIT" = "yes" ]] && echo "$sqlquery"| mysql -u "$DBUSER" -p"$DBPASS" "$DBNAME"
 
