@@ -23,10 +23,9 @@ function varichar {
 
 	PAT=$(echo "$eqval"|cut -d '=' -f 1)
 	[[ "$PAT" =~ / ]] && { echo "$eqval" ; return ; }
-	LEN=$(echo "$eqval"|cut -d '=' -f 2)
-	[[ ! "$LEN" =~ $numpat ]] && { echo "$eqval" ; return ; }
+	DEF=$(echo "$eqval"|cut -d '=' -f 2)
 
-	sed -r "s/^(.*$PAT.*) x(%?)\$/\1 varchar($LEN),\2/i" # reads from stdin of the call
+	sed -r "s/^(.*$PAT.*) x(%?)\$/\1 $DEF,\2/i" # reads from stdin of the call
 }
 
 function printhelp {
@@ -36,15 +35,15 @@ Create a table definition from a CSV file
 
 Every table created will have an "id" column that serves as primary key.
 
-All columns are of type varchar with size $VCSIZE
+All columns are of type varchar with size $VCSIZE, except where overridden by the -d option
 
 OPTIONS
 
 	-t TABLENAME
 	name of the atrget table to create
 
-	-v HEADPAT=SIZE
-	Pattern of header names, and size of the field (varchar)
+	-d HEADPAT=SQLDEF
+	Pattern of header names, and field definition (for example, DATETIME or varchar(30))
 	  eg:
 		-v Name=30
 	  for any column with "Name" in it to be of type varchar of length 30
@@ -71,8 +70,8 @@ while [[ -n "$@" ]]; do
 	if  [[ "$myarg" = '-t' ]]; then # target table name
 		TABLENAME=$1
 		shift
-	elif [[ "$myarg" = '-v' ]]; then
-		VARICHARS="$VARICHARS "$(echo "$1"|base64 -w 0)
+	elif [[ "$myarg" = '-d' ]]; then
+		VARICHARS="$VARICHARS "$(echo "$1"|base64 -w 0) # base64 to more easily tokenize
 		shift
 	elif [[ "$myarg" = '-i' ]]; then # list patterns to match against header names - a pattern "id" would match "userid" and "customerid" and cause both to eb indexed, but not "UserId"
 		INDEXER="$INDEXER $1"
