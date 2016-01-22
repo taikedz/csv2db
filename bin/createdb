@@ -46,7 +46,7 @@ OPTIONS
 	Pattern of header names, and field definition (for example, DATETIME or varchar(30))
 	  eg:
 		-d Name=30
-	  for any column with columns matching regex ".*name.*" to be of
+	  for any column with columns matching regex ".*Name.*" to be of
 	  type varchar of length 30
 	You can specify multiple "-d" options
 
