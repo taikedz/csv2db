@@ -2,13 +2,15 @@
 
 Take a CSV file and load it to a database!
 
-If you need an easy way to take a single CSV file and load it to MySQL as a single database table, this tool will do it for you. You can then use that table to do analysis that SQL querying was better suited for.
+If you need an easy way to take a single CSV file and load it to MySQL as a single database table, this tool will do it for you. You can then use that database table to do analysis that SQL querying was better suited for.
 
 This version has a script to create a database table out of your CSV file, and a script to convert CSV to MySQL/MariaDB "INSERT" statements.
 
 ## Installation
 
 Copy the scripts in `bin/` to `/usr/local/bin`, or add the `bin/` directory to your `PATH`
+
+## Dependencies
 
 This tool requires merely `bash` and the standard python CSV libraries.
 
