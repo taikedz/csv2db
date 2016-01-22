@@ -4,9 +4,9 @@
 
 Probably a deployment file with contents similar to:
 
-  #define table/headers to use/columns to index
-  Table1/Header_1,Header_2,Header_3/Header_3
-  Table2/Header_3,Header_4,Header_5/Header_3
+    #define table/headers to use/columns to index
+    Table1/Header_1,Header_2,Header_3/Header_3
+    Table2/Header_3,Header_4,Header_5/Header_3
 
 Add support to existing scripts to recognize these lines
 
