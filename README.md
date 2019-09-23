@@ -1,5 +1,7 @@
 # csv2db
 
+> Moved to <https://gitlab.com/taikedz/csv2db>
+
 Take a CSV file and load it to a database!
 
 If you need an easy way to take a single CSV file and load it to MySQL as a single database table, this tool will do it for you. You can then use that database table to do analysis that SQL querying was better suited for.
